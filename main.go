@@ -15,16 +15,25 @@ import (
 )
 
 const (
-	URL = "https://api.github.com/repos/RocketChat/Rocket.Chat.Electron/releases/latest"
+	//URL = "https://api.github.com/repos/RocketChat/Rocket.Chat/releases/latest"
+	//URL = "https://api.github.com/repos/RocketChat/Rocket.Chat.Electron/releases/latest"
+	URL = "https://api.github.com/repos/%s/releases/latest"
 )
 
 var (
 	o = struct {
-		debug  *bool
-		format *string
+		debug   *bool
+		format  *string
+		project *string
 	}{
-		debug:  flag.Bool("debug", false, "switch on debugging"),
-		format: flag.String("format", "{{.Name}} {{.Tarball_url}}\n", "the `format` of the output"),
+		debug:   flag.Bool("debug", false, "switch on debugging"),
+		format:  flag.String("format", "+default", "the `format` of the output"),
+		project: flag.String("project", "go-gitea/gitea", "the `organization/package` to check the version"),
+	}
+	// pre-defined formats
+	format = map[string]string{
+		"+default": `{{.Name}} {{.Tarball_url}}{{"\n"}}`,
+		"+assets":  `{{range .Assets}}{{.Browser_download_url}}{{"\n"}}{{end}}`,
 	}
 )
 
@@ -57,16 +66,24 @@ func main() {
         .Browser_downlaod_url
         .Content_type
         .Updated_at
-`)
+	Predefined formats:
+	- +default %s
+	- +assets  %s
+`, format["+default"], format["+assets"])
 	}
 	flag.Parse()
+
+	// check, we have one of the pre-defined formats
+	if v, ok := format[*o.format]; ok {
+		*o.format = v
+	}
 
 	var tt = template.New("output")
 	if _, err := tt.Parse(*o.format); err != nil {
 		log.Fatal(err)
 	}
 
-	response, err := http.Get(URL)
+	response, err := http.Get(fmt.Sprintf(URL, *o.project))
 	if err != nil {
 		log.Fatal(err)
 	}
