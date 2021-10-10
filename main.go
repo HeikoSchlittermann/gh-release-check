@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -26,7 +27,7 @@ var (
 		format  *string
 		project *string
 	}{
-		debug:   flag.Bool("debug", false, "switch on debugging"),
+		debug:   flag.Bool("debug", false, "switch on debugging (print the JSON and exit cleanly)"),
 		format:  flag.String("format", "+default", "the `format` of the output"),
 		project: flag.String("project", "go-gitea/gitea", "the `organization/package` to check the version"),
 	}
@@ -90,7 +91,19 @@ func main() {
 	defer response.Body.Close()
 
 	if *o.debug {
-		io.Copy(os.Stdout, response.Body)
+		jq := exec.Command("jq", ".")
+		jq.Stdout = os.Stdout
+		pipe, err := jq.StdinPipe()
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := jq.Start(); err != nil {
+			log.Println("the attempt to start jq returned:", err)
+			pipe = os.Stdout
+		}
+		io.Copy(pipe, response.Body)
+		pipe.Close()
+		_ = jq.Wait()
 		return
 	}
 
