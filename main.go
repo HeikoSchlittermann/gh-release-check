@@ -29,11 +29,11 @@ var (
 	}{
 		debug:   flag.Bool("debug", false, "switch on debugging (print the JSON and exit cleanly)"),
 		format:  flag.String("format", "+default", "the `format` of the output"),
-		project: flag.String("project", "go-gitea/gitea", "the `organization/package` to check the version"),
+		project: flag.String("project", "HeikoSchlittermann/github-release-check", "the `organization/package` to check the version"),
 	}
 	// pre-defined formats
 	format = map[string]string{
-		"+default": `{{.Name}} {{.Tarball_url}}{{"\n"}}`,
+		"+default": `{{.Tag_name}} {{.Name}} {{.Tarball_url}}{{"\n"}}`,
 		"+assets":  `{{range .Assets}}{{.Browser_download_url}}{{"\n"}}{{end}}`,
 	}
 )
