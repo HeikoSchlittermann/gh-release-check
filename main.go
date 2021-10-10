@@ -4,11 +4,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -92,19 +90,7 @@ func main() {
 	defer response.Body.Close()
 
 	if *o.debug {
-		jq := exec.Command("jq", ".")
-		jq.Stdout = os.Stdout
-		pipe, err := jq.StdinPipe()
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := jq.Start(); err != nil {
-			log.Println("the attempt to start jq returned:", err)
-			pipe = os.Stdout
-		}
-		io.Copy(pipe, response.Body)
-		pipe.Close()
-		_ = jq.Wait()
+		debug(response.Body)
 		return
 	}
 
