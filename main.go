@@ -67,6 +67,7 @@ func main() {
         .Browser_downlaod_url
         .Content_type
         .Updated_at
+	  .Deb_url
 	Predefined formats:
 	- +default %s
 	- +assets  %s
