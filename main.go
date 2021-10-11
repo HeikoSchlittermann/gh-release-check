@@ -21,9 +21,11 @@ const (
 
 var (
 	o = struct {
+		compare *string
 		debug   *bool
 		format  *string
 	}{
+		compare: flag.String("compare", "", "`filename` to compare the output with"),
 		debug:   flag.Bool("debug", false, "switch on debugging (print the JSON and exit cleanly)"),
 		format:  flag.String("format", "+default", "the `format` of the output"),
 	}
@@ -114,6 +116,34 @@ func main() {
 		}
 	}
 
-	tt.Execute(os.Stdout, latest)
+	out := new(strings.Builder)
+	tt.Execute(out, latest)
 
+	// Make sure we have a "\n" at the end
+	if !strings.HasSuffix(out.String(), "\n") {
+		out.WriteByte('\n')
+	}
+
+	if *o.compare == "" {
+		fmt.Print(out)
+	} else {
+		var line string
+		if fh, err := os.Open(*o.compare); err != nil {
+			log.Fatal(err)
+		} else {
+			defer fh.Close()
+			line, err = bufio.NewReader(fh).ReadString('\n')
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		if out.String() == line {
+			log.Print("[✓] ", out)
+			os.Exit(0)
+		} else {
+			log.Print("[ ] ", line)
+			log.Print("[✗] ", out)
+			os.Exit(1)
+		}
+	}
 }
