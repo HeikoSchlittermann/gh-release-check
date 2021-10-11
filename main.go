@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -14,8 +15,7 @@ import (
 )
 
 const (
-	//URL = "https://api.github.com/repos/RocketChat/Rocket.Chat/releases/latest"
-	//URL = "https://api.github.com/repos/RocketChat/Rocket.Chat.Electron/releases/latest"
+	// e.g: %s: RocketChat/Rocket.Chat.Electron
 	URL = "https://api.github.com/repos/%s/releases/latest"
 )
 
@@ -23,11 +23,9 @@ var (
 	o = struct {
 		debug   *bool
 		format  *string
-		project *string
 	}{
 		debug:   flag.Bool("debug", false, "switch on debugging (print the JSON and exit cleanly)"),
 		format:  flag.String("format", "+default", "the `format` of the output"),
-		project: flag.String("project", "HeikoSchlittermann/github-release-check", "the `organization/package` to check the version"),
 	}
 	// pre-defined formats
 	format = map[string]string{
@@ -52,7 +50,7 @@ type latest struct {
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [options]\n", filepath.Base(os.Args[0]))
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [options] ORG/PROJECT\n", filepath.Base(os.Args[0]))
 		flag.PrintDefaults()
 		fmt.Fprintf(flag.CommandLine.Output(), `
     Format string elements:
@@ -65,13 +63,23 @@ func main() {
         .Browser_downlaod_url
         .Content_type
         .Updated_at
-	  .Deb_url
-	Predefined formats:
-	- +default %s
-	- +assets  %s
+        .Deb_url
+      Predefined formats:
+      - +default %s
+      - +assets  %s
+
+    Projects for testing: HeikoSchlittermann/github-release-check
+                          go-gitea/gitea
+                          Exim/exim
 `, format["+default"], format["+assets"])
 	}
 	flag.Parse()
+
+	if flag.NArg() != 1 {
+		flag.Usage()
+		os.Exit(1)
+	}
+	var project = flag.Arg(0)
 
 	// check, we have one of the pre-defined formats
 	if v, ok := format[*o.format]; ok {
@@ -83,7 +91,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	response, err := http.Get(fmt.Sprintf(URL, *o.project))
+	response, err := http.Get(fmt.Sprintf(URL, project))
 	if err != nil {
 		log.Fatal(err)
 	}
