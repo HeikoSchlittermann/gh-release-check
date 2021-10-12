@@ -128,6 +128,10 @@ func main() {
 	}
 	defer response.Body.Close()
 
+	if response.StatusCode != 200 {
+		log.Fatalln("Response status:", response.Status)
+	}
+
 	if *o.debug {
 		jq(response.Body)
 		os.Exit(0)
