@@ -16,7 +16,7 @@ import (
 	"text/template"
 	"time"
 
-	"schlittermann.de/go/github-release-check/github"
+	"go.schlittermann.de/heiko/gh-release-check.git/github"
 )
 
 var (
