@@ -100,8 +100,8 @@ func main() {
 	defer response.Body.Close()
 
 	if *o.debug {
-		debug(response.Body)
-		return
+		jq(response.Body)
+		os.Exit(0)
 	}
 
 	var latest latest

@@ -7,7 +7,7 @@ import (
 	"os/exec"
 )
 
-func debug(b io.ReadCloser) {
+func jq(b io.ReadCloser) {
 	jq := exec.Command("jq", ".")
 	jq.Stdout = os.Stdout
 	pipe, err := jq.StdinPipe()
