@@ -1,3 +1,6 @@
+/*
+https://gitea.schlittermann.de/api/swagger#/repository/repoListReleases
+*/
 package main
 
 import (
@@ -12,19 +15,20 @@ import (
 	"strings"
 	"text/template"
 	"time"
-)
 
-const (
-	// e.g: %s: RocketChat/Rocket.Chat.Electron
-	URL = "https://api.github.com/repos/%s/releases/latest"
+	"schlittermann.de/go/github-release-check/github"
 )
 
 var (
 	o = struct {
+		api     *string
+		baseurl *string
 		compare *string
 		debug   *bool
 		format  *string
 	}{
+		api:     flag.String("api", "github", "API `type` (github, gitea)"),
+		baseurl: flag.String("baseurl", "github.com", "base `url` of the hosting service (e.g. github.com, gitea.schlittermann.de)"),
 		compare: flag.String("compare", "", "`filename` to compare the output with"),
 		debug:   flag.Bool("debug", false, "switch on debugging (print the JSON and exit cleanly)"),
 		format:  flag.String("format", "+default", "the `format` of the output"),
@@ -33,6 +37,12 @@ var (
 	format = map[string]string{
 		"+default": `{{.Tag_name}} {{.Name}} {{.Tarball_url}}{{"\n"}}`,
 		"+assets":  `{{range .Assets}}{{.Browser_download_url}}{{"\n"}}{{end}}`,
+	}
+
+	// map the service to an URL template
+	URL = map[string]string{
+		"github": "https://api.%s/repos/%s/releases/latest",
+		"gitea":  "https://%s/api/v1/repos/%s/releases",
 	}
 )
 
@@ -48,6 +58,10 @@ type latest struct {
 		Updated_at           time.Time
 	}
 	Deb_url string
+}
+
+type Client interface {
+	URL() string
 }
 
 func main() {
@@ -81,7 +95,17 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
+
 	var project = flag.Arg(0)
+	var client Client
+
+	switch *o.api {
+	case "github":
+		client = github.NewClient(*o.baseurl, project)
+	default:
+		log.Fatalln("Unknown API", *o.api)
+	}
+	log.Println("Using", client.URL())
 
 	// check, we have one of the pre-defined formats
 	if v, ok := format[*o.format]; ok {
@@ -93,7 +117,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	response, err := http.Get(fmt.Sprintf(URL, project))
+	response, err := http.Get(client.URL())
 	if err != nil {
 		log.Fatal(err)
 	}
