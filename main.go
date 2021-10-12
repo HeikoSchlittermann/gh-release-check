@@ -91,9 +91,21 @@ func main() {
 	}
 	flag.Parse()
 
+	// Need one extra argument - the project
 	if flag.NArg() != 1 {
 		flag.Usage()
 		os.Exit(1)
+	}
+
+	// check, we have one of the pre-defined formats
+	if v, ok := format[*o.format]; ok {
+		*o.format = v
+	}
+
+	// initialize the template
+	var tt = template.New("output")
+	if _, err := tt.Parse(*o.format); err != nil {
+		log.Fatal(err)
 	}
 
 	var project = flag.Arg(0)
@@ -102,20 +114,12 @@ func main() {
 	switch *o.api {
 	case "github":
 		client = github.NewClient(*o.baseurl, project)
+	case "gitea":
+		client = gitea.NewClient(*o.baseurl, project)
 	default:
 		log.Fatalln("Unknown API", *o.api)
 	}
 	log.Println("Using", client.URL())
-
-	// check, we have one of the pre-defined formats
-	if v, ok := format[*o.format]; ok {
-		*o.format = v
-	}
-
-	var tt = template.New("output")
-	if _, err := tt.Parse(*o.format); err != nil {
-		log.Fatal(err)
-	}
 
 	response, err := http.Get(client.URL())
 	if err != nil {
