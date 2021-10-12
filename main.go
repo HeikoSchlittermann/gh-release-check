@@ -16,6 +16,7 @@ import (
 	"text/template"
 	"time"
 
+	"go.schlittermann.de/heiko/gh-release-check.git/gitea"
 	"go.schlittermann.de/heiko/gh-release-check.git/github"
 )
 
